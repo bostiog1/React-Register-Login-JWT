@@ -5,7 +5,7 @@ import {
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "react-router-dom";
+import axios from "./api/axios";
 
 const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
@@ -56,19 +56,42 @@ const Register = () => {
       setErrMsg("Invalid Entry");
       return;
     }
-    
-    setSuccess(true);
+    try {
+      const response = await axios.post(
+        REGISTER_URL,
+        JSON.stringify({ user, pwd }),
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      // TODO: remove console.logs before deployment
+      console.log(JSON.stringify(response?.data));
+      //console.log(JSON.stringify(response))
+      setSuccess(true);
+      //clear state and controlled inputs
+      setUser("");
+      setPwd("");
+      setMatchPwd("");
+    } catch (err) {
+      if (!err?.response) {
+        setErrMsg("No Server Response");
+      } else if (err.response?.status === 409) {
+        setErrMsg("Username Taken");
+      } else {
+        setErrMsg("Registration Failed");
+      }
+      errRef.current.focus();
+    }
   };
 
   return (
     <>
       {success ? (
-        <section className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Success!</h1>
+        <section>
+          <h1>Success!</h1>
           <p>
-            <Link to="/" className="text-white hover:underline">
-              Sign In
-            </Link>
+            <a href="#">Sign In</a>
           </p>
         </section>
       ) : (
